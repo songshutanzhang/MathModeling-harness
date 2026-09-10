@@ -37,6 +37,7 @@ def matches(path: str, patterns: list[str]) -> bool:
 
 
 def validate_plan(project: Path, plan: dict) -> list[Path]:
+    project = project.resolve()  # Normalize Windows short names before containment checks.
     if plan.get("schema_version") != "1.0" or not isinstance(plan.get("targets"), list) or not plan["targets"]:
         raise ValueError("cleanup plan is incomplete")
     targets = []

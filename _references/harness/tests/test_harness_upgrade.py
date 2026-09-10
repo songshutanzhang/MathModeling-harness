@@ -723,6 +723,8 @@ class HarnessUpgradeTests(unittest.TestCase):
                 "durable_replacement_id": "ART-DURABLE", "lifecycle_disposable_event_hash": "B" * 64,
             }]}
             self.assertEqual(module.validate_plan(project, plan), [target.resolve()])
+            alias = project / ".." / project.name
+            self.assertEqual(module.validate_plan(alias, plan), [target.resolve()])
             plan["targets"][0]["path"] = "."
             with self.assertRaises(ValueError):
                 module.validate_plan(project, plan)
