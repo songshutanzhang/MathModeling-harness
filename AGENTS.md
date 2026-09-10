@@ -7,5 +7,5 @@
 - 将题目、附件、计算与论文产物放在仓库外的独立项目目录。
 - 不假定已安装其他 Agent 插件，不假定模型或推理档位可切换。依据当前运行时真实能力生成快照；不可伪造独立评审或审批回执。
 - 通用知识入口为空白公开配置；历史案例、来源资料与训练记录不随仓库提供。
-- 修改公共代码后执行 `python -m pytest -q`。发布前维护 PUBLIC_MANIFEST.json 与 .gitignore 的逐文件白名单，并运行 `python tools/audit_public.py`。
+- 修改公共代码后执行 `python harness.py test`。发布前维护 PUBLIC_MANIFEST.json 与 .gitignore 的逐文件白名单，并运行 `python tools/audit_public.py`。
 - 禁止把任何实际任务文件、二进制文档、密钥、个人机器路径或私有历史加入白名单。

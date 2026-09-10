@@ -3,6 +3,7 @@ from pathlib import Path
 import argparse
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 
@@ -13,9 +14,17 @@ def call(script, *args):
     return subprocess.call([sys.executable, str(script), *map(str, args)], cwd=ROOT)
 
 def main():
+    # Propagate UTF-8 to all Python subprocesses on non-Chinese Windows hosts.
+    os.environ["PYTHONUTF8"] = "1"
+    os.environ["PYTHONIOENCODING"] = "utf-8"
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["setup", "check", "smoke", "run"])
+    parser.add_argument("action", choices=["setup", "check", "test", "smoke", "run"])
     args, rest = parser.parse_known_args()
+    if args.action == "test":
+        return subprocess.call([sys.executable, "-m", "pytest", "-q", *rest], cwd=ROOT)
     if args.action == "run":
         return call(SCRIPTS / "run_orchestrator.py", *rest)
     if args.action == "smoke":

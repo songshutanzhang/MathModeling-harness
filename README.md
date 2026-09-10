@@ -21,7 +21,7 @@ python -m pip install -r requirements.txt
 python tools/audit_public.py
 python harness.py setup
 python harness.py check
-python -m pytest -q
+python harness.py test
 python harness.py smoke --output-dir ../mathmodel-smoke
 ```
 
