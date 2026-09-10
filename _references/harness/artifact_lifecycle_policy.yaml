@@ -1,0 +1,26 @@
+schema_version: "1.0"
+allowed_ephemeral_patterns:
+  - "tmp/**"
+  - ".tmp/**"
+  - "paper/qa/.staging/**"
+  - "code/outputs/.scratch/**"
+  - "training/runs/*/scratch/**"
+protected_patterns:
+  - "历年真题/**"
+  - "reference-materials/cumcm/private-fulltext/**"
+  - "reference-materials/cumcm/download-staging/**"
+  - "**/results/results.json"
+  - "**/figures/**"
+  - "**/audit/checkpoints/**"
+  - "**/paper/revisions/**"
+  - "**/submission/**"
+  - "**/AI_USAGE_LOG.md"
+  - "**/SOURCE_EXPOSURE_LEDGER.jsonl"
+  - "**/PROCESS_CHAIN.json"
+rules:
+  require_explicit_relative_target: true
+  reject_symlinks: true
+  require_expected_tree_sha256: true
+  require_disposable_lifecycle_event_for_new_runs: true
+  legacy_targets_inventory_only: true
+  refuse_workspace_root: true

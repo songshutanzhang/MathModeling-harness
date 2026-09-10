@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "execution_mode",
+    "review_bundle_id",
+    "hard_failures",
+    "soft_failures",
+    "validation_quality",
+    "reliability_score",
+    "recommended_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "execution_mode": {
+      "enum": [
+        "training_run",
+        "reference_case_ingestion",
+        "evaluation_run",
+        "live_competition",
+        "release_candidate"
+      ]
+    },
+    "review_bundle_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "hard_failures": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    },
+    "soft_failures": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    },
+    "baseline_quality": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "validation_quality": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "innovation_quality": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "ceiling_bottlenecks": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    },
+    "alternative_routes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    },
+    "reliability_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "competition_upside_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "recommended_action": {
+      "enum": [
+        "accept",
+        "local_fix",
+        "return_to_g4",
+        "return_to_g2"
+      ]
+    },
+    "cost_notice": {
+      "type": "string",
+      "minLength": 10
+    },
+    "human_approval_required": {
+      "type": "boolean"
+    },
+    "review_protocol": {
+      "const": "reliability_only"
+    },
+    "disposition_chain_head": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    }
+  },
+  "$id": "https://local.invalid/mathmodel/g5_reliability.schema.json",
+  "title": "G5 reliability-only decision"
+}

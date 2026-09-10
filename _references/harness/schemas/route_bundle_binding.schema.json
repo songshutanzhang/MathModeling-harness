@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/mathmodel/route_bundle_binding.schema.json",
+  "title": "G2/G5 bundle to effective reasoning route binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "bundle_kind", "task_id", "application_event_id",
+    "application_event_hash", "frozen_input_sha256", "resolved",
+    "topology_receipt", "evidence_confidence", "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "bundle_kind": {"enum": ["g2", "g5"]},
+    "task_id": {"type": "string", "minLength": 1},
+    "application_event_id": {"type": "string", "pattern": "^RR-[A-Za-z0-9_-]+$"},
+    "application_event_hash": {"$ref": "#/$defs/sha256"},
+    "frozen_input_sha256": {"$ref": "#/$defs/sha256"},
+    "resolved": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_id", "reasoning_effort", "topology"],
+      "properties": {
+        "model_id": {"type": "string", "minLength": 1},
+        "reasoning_effort": {"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]},
+        "topology": {"enum": ["single", "independent_candidates", "dual_review", "ensemble"]}
+      }
+    },
+    "topology_receipt": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/artifact"}
+      ]
+    },
+    "evidence_confidence": {"enum": ["verified", "limited"]},
+    "binding_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9A-F]{64}$"},
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

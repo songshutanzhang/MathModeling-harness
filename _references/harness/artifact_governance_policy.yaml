@@ -1,0 +1,55 @@
+schema_version: "1.0"
+defaults:
+  training_run: "tier1"
+  reference_case_ingestion: "tier1"
+  evaluation_run: "tier3"
+  live_competition: "tier3"
+  release_candidate: "tier3"
+tier2_frequency:
+  full_training_cases: 4
+upgrade_events:
+  - "writer_schema_changed"
+  - "figure_pipeline_changed"
+  - "citation_mechanism_changed"
+  - "result_binding_changed"
+  - "document_generation_changed"
+  - "pagination_bug_detected"
+  - "metadata_bug_detected"
+  - "previous_tier2_failed"
+  - "new_problem_family"
+requirements:
+  tier1:
+    - "run/HARNESS_PROFILE.json"
+    - "run/MODEL_CAPABILITY_SNAPSHOT.json"
+    - "run/REASONING_ROUTE_LEDGER.jsonl"
+    - "results/results.json"
+    - "reports/ANALYSIS_MODELING_REPORT.md"
+    - "reports/RESULTS_REPORT.md"
+    - "reports/VALIDATION_REPORT.md"
+    - "paper/paper.md"
+    - "run/LIGHTWEIGHT_MANIFEST.yaml"
+  tier2:
+    - "tier1 requirements"
+    - "versioned DOCX"
+    - "DOCX-derived PDF"
+    - "all page PNG review"
+    - "metadata and manifest audit"
+    - "AI disclosure audit"
+  tier3:
+    - "tier2 requirements"
+    - "full G1-G6 gate chain"
+    - "anonymous final DOCX and same-source PDF"
+    - "supporting materials and final delivery contract"
+mode_requirements:
+  reference_case_ingestion:
+    - "CASE_MANIFEST.yaml"
+    - "compliance/CASE_MODE.yaml"
+    - "00-input/SOURCE_VISIBILITY.yaml"
+    - "audit/SOURCE_EXPOSURE_LEDGER.jsonl"
+    - "audit/PROCESS_CHAIN.json"
+    - "reports/ANALYSIS_MODELING_REPORT.md"
+    - "reports/STRATEGY_CONTEXT.md"
+    - "run/HARNESS_PROFILE.json"
+    - "run/MODEL_CAPABILITY_SNAPSHOT.json"
+    - "run/REASONING_ROUTE_LEDGER.jsonl"
+never_downgrade_modes: ["evaluation_run", "live_competition", "release_candidate"]

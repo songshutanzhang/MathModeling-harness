@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mathmodel/schemas/results.schema.json",
+  "title": "MathModelAgent Results Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "run",
+    "problem",
+    "inputs",
+    "knowledge_cards",
+    "rule_coverage",
+    "subproblems",
+    "artifacts",
+    "claims",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "run": {"$ref": "#/$defs/run"},
+    "problem": {"$ref": "#/$defs/problem"},
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/input"}
+    },
+    "knowledge_cards": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^KB-[A-Z0-9._-]+$"}
+    },
+    "rule_coverage": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/rule_coverage"}
+    },
+    "subproblems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/subproblem"}
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "claims": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/claim"}
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/warning"}
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "sha256": {"type": "string", "pattern": "^[0-9A-Fa-f]{64}$"},
+    "evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"}
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run_id", "status", "entrypoint", "code_version", "environment", "random_seeds", "parameters"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/id"},
+        "status": {"enum": ["candidate", "approved", "failed"]},
+        "entrypoint": {"type": "string", "minLength": 1},
+        "code_version": {"type": "string", "minLength": 1},
+        "environment": {"type": "object", "minProperties": 1},
+        "random_seeds": {"type": "array", "uniqueItems": true, "items": {"type": "integer"}},
+        "parameters": {"type": "object"}
+      }
+    },
+    "problem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["competition", "year", "problem_id", "title", "rule_source_hashes"],
+      "properties": {
+        "competition": {"type": "string", "minLength": 1},
+        "year": {"type": "integer", "minimum": 1900, "maximum": 2200},
+        "problem_id": {"$ref": "#/$defs/id"},
+        "title": {"type": "string", "minLength": 1},
+        "rule_source_hashes": {"type": "array", "items": {"$ref": "#/$defs/sha256"}, "uniqueItems": true}
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "role", "source_type", "locator", "schema_summary"],
+      "properties": {
+        "dataset_id": {"$ref": "#/$defs/id"},
+        "role": {"enum": ["official", "external", "derived", "parameter"]},
+        "source_type": {"enum": ["local", "url"]},
+        "locator": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_summary": {"type": "string", "minLength": 1},
+        "parent_dataset_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"source_type": {"const": "local"}}, "required": ["source_type"]},
+          "then": {"required": ["sha256"]}
+        }
+      ]
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "lower", "upper"],
+      "properties": {
+        "method": {"type": "string", "minLength": 1},
+        "lower": {"type": "number"},
+        "upper": {"type": "number"},
+        "level": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result_id", "name", "value", "unit", "direction", "split", "evidence_refs"],
+      "properties": {
+        "result_id": {"$ref": "#/$defs/id"},
+        "name": {"type": "string", "minLength": 1},
+        "value": {"type": ["number", "string", "boolean"]},
+        "unit": {"type": "string", "minLength": 1},
+        "direction": {"enum": ["minimize", "maximize", "target", "descriptive"]},
+        "split": {"type": "string", "minLength": 1},
+        "uncertainty": {"$ref": "#/$defs/uncertainty"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline_id", "name", "metric_result_ids", "comparison"],
+      "properties": {
+        "baseline_id": {"$ref": "#/$defs/id"},
+        "name": {"type": "string", "minLength": 1},
+        "metric_result_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "comparison": {"type": "string", "minLength": 1}
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["constraint_id", "lhs", "sense", "rhs", "tolerance", "passed"],
+      "properties": {
+        "constraint_id": {"$ref": "#/$defs/id"},
+        "lhs": {"type": "number"},
+        "sense": {"enum": ["<=", "=", ">="]},
+        "rhs": {"type": "number"},
+        "tolerance": {"type": "number", "minimum": 0},
+        "slack": {"type": "number"},
+        "passed": {"type": "boolean"}
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validation_id", "type", "passed", "summary", "evidence_refs"],
+      "properties": {
+        "validation_id": {"$ref": "#/$defs/id"},
+        "type": {"type": "string", "minLength": 1},
+        "passed": {"type": "boolean"},
+        "summary": {"type": "string", "minLength": 1},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "subproblem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subproblem_id", "status", "method_ids", "metrics", "baselines", "constraints", "validations", "artifact_ids"],
+      "properties": {
+        "subproblem_id": {"$ref": "#/$defs/id"},
+        "status": {"enum": ["candidate", "completed", "failed"]},
+        "method_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "metrics": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/metric"}},
+        "baselines": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/baseline"}},
+        "constraints": {"type": "array", "items": {"$ref": "#/$defs/constraint"}},
+        "validations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/validation"}},
+        "artifact_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "kind", "path", "sha256", "produced_by", "evidence_result_ids"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["table", "figure", "model", "log", "data", "report", "other"]},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "produced_by": {"type": "string", "minLength": 1},
+        "evidence_result_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "rule_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "status", "summary", "evidence_refs"],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/id"},
+        "status": {"enum": ["satisfied", "not_applicable", "failed"]},
+        "summary": {"type": "string", "minLength": 1},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "text", "status", "evidence_result_ids"],
+      "properties": {
+        "claim_id": {"$ref": "#/$defs/id"},
+        "text": {"type": "string", "minLength": 1},
+        "status": {"enum": ["candidate", "approved", "rejected"]},
+        "evidence_result_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["warning_id", "severity", "message", "evidence_refs"],
+      "properties": {
+        "warning_id": {"$ref": "#/$defs/id"},
+        "severity": {"enum": ["info", "warning", "error"]},
+        "message": {"type": "string", "minLength": 1},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    }
+  }
+}

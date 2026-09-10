@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/mathmodel/model_application_receipt.schema.json",
+  "title": "Runtime effective model and reasoning receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_id", "captured_at", "source", "task_id",
+    "assessment_event_id", "effective_model_id", "effective_reasoning_effort",
+    "effective_topology"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "receipt_id": {"type": "string", "pattern": "^MR-[A-Za-z0-9_-]+$"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "source": {"const": "reasoning_effort_interface"},
+    "task_id": {"type": "string", "minLength": 1},
+    "assessment_event_id": {"type": "string", "pattern": "^RR-[A-Za-z0-9_-]+$"},
+    "effective_model_id": {"type": "string", "minLength": 1},
+    "effective_reasoning_effort": {
+      "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]
+    },
+    "effective_topology": {
+      "enum": ["single", "independent_candidates", "dual_review", "ensemble"]
+    },
+    "runtime_evidence": {"type": "object"}
+  }
+}

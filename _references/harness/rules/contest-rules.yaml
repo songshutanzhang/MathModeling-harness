@@ -1,0 +1,29 @@
+schema_version: '1.0'
+rules:
+  - rule_id: CUMCM-2026-LIVE
+    competition: cumcm
+    year: 2026
+    modes: [evaluation_run, live_competition, release_candidate]
+    knowledge_states: [unexposed, exposed]
+    source: _references/cumcm_2026_compliance.md
+    checker: 6verity/scripts/check_cumcm_2026.py
+    fixed_ai_wording: required
+    body_page_limit: 30
+  - rule_id: CUMCM-2023-HISTORICAL
+    competition: cumcm
+    year: 2023
+    modes: [evaluation_run, release_candidate]
+    knowledge_states: [unexposed, exposed]
+    source: case:official_format
+    checker: historical_format_and_delivery
+    fixed_ai_wording: not_applicable
+    body_page_limit: 20
+  - rule_id: GENERIC-TRAINING
+    competition: generic
+    year: null
+    modes: [training_run, reference_case_ingestion]
+    knowledge_states: [unexposed, exposed]
+    source: _references/knowledge/evaluation/EVAL_SPEC.md
+    checker: training_artifact_checks
+    fixed_ai_wording: not_applicable
+    body_page_limit: null

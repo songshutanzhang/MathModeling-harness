@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-28T00:00:00+08:00",
+  "run": {
+    "run_id": "example-run-001",
+    "status": "candidate",
+    "entrypoint": "python code/main.py",
+    "code_version": "example-code-sha256",
+    "environment": {
+      "python": "3.x",
+      "platform": "example"
+    },
+    "random_seeds": [
+      2026
+    ],
+    "parameters": {
+      "alpha": 0.1
+    }
+  },
+  "problem": {
+    "competition": "example",
+    "year": 2026,
+    "problem_id": "example-a",
+    "title": "最小合法结果契约示例",
+    "rule_source_hashes": []
+  },
+  "inputs": [
+    {
+      "dataset_id": "official-input",
+      "role": "official",
+      "source_type": "url",
+      "locator": "https://example.invalid/problem-data",
+      "schema_summary": "示例输入；实际项目应替换为官方文件、字段口径和哈希。",
+      "parent_dataset_ids": []
+    }
+  ],
+  "knowledge_cards": [],
+  "rule_coverage": [
+    {
+      "rule_id": "RULE-001",
+      "status": "satisfied",
+      "summary": "示例规则已由指标记录覆盖。",
+      "evidence_refs": [
+        "metric-main"
+      ]
+    }
+  ],
+  "subproblems": [
+    {
+      "subproblem_id": "problem-1",
+      "status": "candidate",
+      "method_ids": [
+        "method-example"
+      ],
+      "metrics": [
+        {
+          "result_id": "metric-main",
+          "name": "示例误差",
+          "value": 1.25,
+          "unit": "1",
+          "direction": "minimize",
+          "split": "validation",
+          "uncertainty": {
+            "method": "重复运行范围",
+            "lower": 1.1,
+            "upper": 1.4
+          },
+          "evidence_refs": []
+        }
+      ],
+      "baselines": [
+        {
+          "baseline_id": "baseline-simple",
+          "name": "透明简单基线",
+          "metric_result_ids": [
+            "metric-main"
+          ],
+          "comparison": "示例仅展示结构；实际项目需分别记录基线与候选指标。"
+        }
+      ],
+      "constraints": [],
+      "validations": [
+        {
+          "validation_id": "validation-001",
+          "type": "schema-example",
+          "passed": true,
+          "summary": "示例结构验证。",
+          "evidence_refs": [
+            "metric-main"
+          ]
+        }
+      ],
+      "artifact_ids": []
+    }
+  ],
+  "artifacts": [],
+  "claims": [
+    {
+      "claim_id": "claim-001",
+      "text": "这是候选解释，不可直接进入最终论文。",
+      "status": "candidate",
+      "evidence_result_ids": [
+        "metric-main"
+      ]
+    }
+  ],
+  "warnings": []
+}

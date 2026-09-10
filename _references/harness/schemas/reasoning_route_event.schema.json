@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/mathmodel/reasoning_route_event.schema.json",
+  "title": "Append-only reasoning route ledger event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "sequence", "event_id", "recorded_at", "task_id",
+    "execution_mode", "stage", "task_class", "gate_id", "status",
+    "risk_signals", "requested", "resolved", "capability_snapshot_sha256",
+    "application_receipt", "topology_receipt", "outputs", "fallback",
+    "evidence_confidence", "limitation", "previous_event_hash", "event_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "event_id": {"type": "string", "pattern": "^RR-[A-Za-z0-9_-]+$"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "task_id": {"type": "string", "minLength": 1},
+    "execution_mode": {"enum": ["training_run", "reference_case_ingestion", "evaluation_run", "live_competition", "release_candidate"]},
+    "stage": {"enum": ["orchestration", "analysis", "coding", "drawing", "writing", "verification"]},
+    "task_class": {
+      "enum": [
+        "routine_analysis", "g1_interpretation", "g2_candidate_generation",
+        "g2_adjudication", "g3_formalization", "g4_implementation",
+        "g5_failure_review", "g5_ceiling_review", "g5_adjudication",
+        "delivery_mechanics", "g6_final_review", "architecture_meta_review",
+        "recovery_diagnostic"
+      ]
+    },
+    "gate_id": {"enum": ["G1", "G2", "G3", "G4", "G5", "G6", null]},
+    "status": {"enum": ["assessed", "applied", "degraded", "blocked", "completed", "reassessed"]},
+    "risk_signals": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "requested": {"$ref": "#/$defs/route"},
+    "resolved": {"anyOf": [{"$ref": "#/$defs/route"}, {"type": "null"}]},
+    "capability_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+    "application_receipt": {"anyOf": [{"$ref": "#/$defs/artifact"}, {"type": "null"}]},
+    "topology_receipt": {"anyOf": [{"$ref": "#/$defs/artifact"}, {"type": "null"}]},
+    "outputs": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+    "fallback": {"type": "array", "items": {"$ref": "#/$defs/route"}},
+    "evidence_confidence": {"enum": ["verified", "limited", "blocked"]},
+    "limitation": {"type": ["string", "null"]},
+    "previous_event_hash": {"$ref": "#/$defs/sha256"},
+    "event_hash": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "effort": {"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]},
+    "topology": {"enum": ["single", "independent_candidates", "dual_review", "ensemble"]},
+    "route": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_id", "reasoning_effort", "topology"],
+      "properties": {
+        "model_id": {"type": "string", "minLength": 1},
+        "reasoning_effort": {"$ref": "#/$defs/effort"},
+        "topology": {"$ref": "#/$defs/topology"}
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9A-F]{64}$"}
+  }
+}

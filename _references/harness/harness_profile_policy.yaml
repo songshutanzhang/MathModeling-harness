@@ -1,0 +1,176 @@
+schema_version: '1.0'
+allowed_modes: [training_run, reference_case_ingestion, evaluation_run, live_competition, release_candidate]
+profiles:
+  reference: {description: 历史知识摄取；只运行读题、冻结、来源学习、综合与建卡链。}
+  draft: {description: 日常训练与快速消融；只执行数学、结果和语义交付硬约束。}
+  audit: {description: 里程碑审计；在 Draft 上增加交付链抽样压测。}
+  contest: {description: 评测、正式赛与发布候选；启用完整竞赛保障。}
+tier_to_profile: {tier1: draft, tier2: audit, tier3: contest}
+mode_profile_overrides: {reference_case_ingestion: reference}
+required_modules_by_profile:
+  reference: [runtime-preflight, problem-freeze, run-ledger, reasoning-router, source-learning, source-exposure-ledger, artifact-governance,
+    artifact-lifecycle, profile-resolver, condition-detectors, recovery-detector]
+  draft: [runtime-preflight, problem-freeze, g2-tournament, solver-execution, results-contract, independent-validation, semantic-package, semantic-writer,
+    run-ledger, reasoning-router, topology-controller, profile-resolver, condition-detectors, recovery-detector, g5-reliability-gate]
+  audit: [runtime-preflight, problem-freeze, g2-tournament, solver-execution, results-contract, independent-validation, semantic-package, semantic-writer,
+    run-ledger, reasoning-router, topology-controller, word-delivery, page-render-audit, profile-resolver, condition-detectors,
+    recovery-detector, g5-reliability-gate]
+  contest: [runtime-preflight, problem-freeze, g2-tournament, solver-execution, results-contract, independent-validation, semantic-package, semantic-writer,
+    run-ledger, reasoning-router, topology-controller, word-delivery, page-render-audit, contest-compliance, profile-resolver,
+    condition-detectors, recovery-detector, g5-reliability-gate]
+stage_modules:
+  orchestration: [runtime-preflight, run-ledger, reasoning-router, topology-controller, capability-selector, artifact-governance, artifact-lifecycle,
+    recovery-controller, human-gates, profile-resolver, condition-detectors, recovery-detector]
+  analysis: [problem-freeze, g2-tournament, source-learning, knowledge-retrieval, special-model-guides, source-exposure-ledger,
+    ceiling-rescue, run-ledger, reasoning-router, topology-controller, human-gates, profile-resolver, condition-detectors,
+    recovery-detector, recovery-controller]
+  coding: [solver-execution, results-contract, independent-validation, semantic-package, g5-reliability-gate, knowledge-retrieval,
+    recovery-controller, run-ledger, reasoning-router, topology-controller, human-gates, profile-resolver, condition-detectors,
+    recovery-detector, g5-blind-upside-review, special-model-guides]
+  drawing: [non-data-figures, run-ledger, reasoning-router, human-gates, profile-resolver, condition-detectors, recovery-detector,
+    recovery-controller]
+  writing: [semantic-package, semantic-writer, word-delivery, results-contract, run-ledger, reasoning-router, human-gates,
+    profile-resolver, condition-detectors, recovery-detector, recovery-controller]
+  verification: [results-contract, independent-validation, g5-reliability-gate, page-render-audit, contest-compliance, artifact-lifecycle,
+    run-ledger, reasoning-router, topology-controller, human-gates, profile-resolver, condition-detectors, recovery-detector,
+    recovery-controller, g5-blind-upside-review]
+formal_modes: [evaluation_run, live_competition, release_candidate]
+allowed_conditions: [knowledge_retrieval_required, special_model_required, non_data_figure_required, recovery_required, upside_review_required]
+executable_experimental_modules: []
+modules:
+- id: runtime-preflight
+  layer: kernel
+  owner_stage: orchestration
+  profiles: [reference, draft, audit, contest]
+- id: problem-freeze
+  layer: kernel
+  owner_stage: analysis
+  profiles: [reference, draft, audit, contest]
+- id: g2-tournament
+  layer: kernel
+  owner_stage: analysis
+  profiles: [draft, audit, contest]
+- id: solver-execution
+  layer: kernel
+  owner_stage: coding
+  profiles: [draft, audit, contest]
+- id: results-contract
+  layer: kernel
+  owner_stage: coding
+  profiles: [draft, audit, contest]
+- id: independent-validation
+  layer: kernel
+  owner_stage: verification
+  profiles: [draft, audit, contest]
+- id: semantic-package
+  layer: kernel
+  owner_stage: coding
+  profiles: [draft, audit, contest]
+- id: semantic-writer
+  layer: kernel
+  owner_stage: writing
+  profiles: [draft, audit, contest]
+- id: run-ledger
+  layer: kernel
+  owner_stage: governance
+  profiles: [reference, draft, audit, contest]
+- id: reasoning-router
+  layer: kernel
+  owner_stage: orchestration
+  profiles: [reference, draft, audit, contest]
+- id: topology-controller
+  layer: conditional
+  owner_stage: orchestration
+  profiles: [draft, audit, contest]
+- id: capability-selector
+  layer: conditional
+  owner_stage: orchestration
+  modes: [training_run]
+- id: source-learning
+  layer: conditional
+  owner_stage: analysis
+  modes: [training_run, reference_case_ingestion]
+- id: knowledge-retrieval
+  layer: conditional
+  owner_stage: analysis
+  conditions: [knowledge_retrieval_required]
+- id: special-model-guides
+  layer: conditional
+  owner_stage: analysis
+  conditions: [special_model_required]
+- id: non-data-figures
+  layer: conditional
+  owner_stage: drawing
+  conditions: [non_data_figure_required]
+- id: word-delivery
+  layer: conditional
+  owner_stage: writing
+  profiles: [audit, contest]
+- id: page-render-audit
+  layer: conditional
+  owner_stage: verification
+  profiles: [audit, contest]
+- id: g5-reliability-gate
+  layer: contest_safeguard
+  owner_stage: coding
+  profiles: [draft, audit, contest]
+- id: source-exposure-ledger
+  layer: contest_safeguard
+  owner_stage: governance
+  profiles: [reference, draft, audit, contest]
+- id: artifact-governance
+  layer: contest_safeguard
+  owner_stage: governance
+  profiles: [reference, draft, audit, contest]
+- id: artifact-lifecycle
+  layer: contest_safeguard
+  owner_stage: governance
+  profiles: [reference, draft, audit, contest]
+- id: human-gates
+  layer: contest_safeguard
+  owner_stage: governance
+  modes: [evaluation_run, live_competition, release_candidate]
+- id: contest-compliance
+  layer: contest_safeguard
+  owner_stage: verification
+  profiles: [contest]
+- id: recovery-controller
+  layer: contest_safeguard
+  owner_stage: governance
+  conditions: [recovery_required]
+- {id: ceiling-rescue, layer: experimental, owner_stage: analysis, experimental: true}
+- id: g5-blind-upside-review
+  layer: conditional
+  owner_stage: coding
+  conditions: [upside_review_required]
+- id: profile-resolver
+  layer: kernel
+  owner_stage: orchestration
+  profiles: [reference, draft, audit, contest]
+- id: condition-detectors
+  layer: contest_safeguard
+  owner_stage: orchestration
+  profiles: [reference, draft, audit, contest]
+- id: recovery-detector
+  layer: contest_safeguard
+  owner_stage: orchestration
+  profiles: [reference, draft, audit, contest]
+legal_tiers_by_mode:
+  training_run: [tier1, tier2]
+  reference_case_ingestion: [tier1]
+  evaluation_run: [tier3]
+  live_competition: [tier3]
+  release_candidate: [tier3]
+condition_owners: {knowledge_retrieval_required: condition-detectors, special_model_required: condition-detectors, non_data_figure_required: condition-detectors,
+  recovery_required: recovery-detector, upside_review_required: condition-detectors}
+condition_stages:
+  knowledge_retrieval_required: [analysis, coding]
+  special_model_required: [analysis, coding]
+  non_data_figure_required: [drawing]
+  recovery_required: [orchestration, analysis, coding, drawing, writing, verification]
+  upside_review_required: [coding, verification]
+condition_forbidden_modes:
+  knowledge_retrieval_required: [evaluation_run]
+  special_model_required: [reference_case_ingestion]
+  non_data_figure_required: [reference_case_ingestion]
+  upside_review_required: [reference_case_ingestion]

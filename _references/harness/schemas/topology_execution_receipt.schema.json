@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/mathmodel/topology_execution_receipt.schema.json",
+  "title": "Isolated execution topology receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_id", "captured_at", "task_id",
+    "assessment_event_id", "topology", "shared_context", "frozen_input_sha256",
+    "execution_units", "receipt_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "receipt_id": {"type": "string", "pattern": "^TR-[A-Za-z0-9_-]+$"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "task_id": {"type": "string", "minLength": 1},
+    "assessment_event_id": {"type": "string", "pattern": "^RR-[A-Za-z0-9_-]+$"},
+    "topology": {"enum": ["independent_candidates", "dual_review", "ensemble"]},
+    "shared_context": {"const": false},
+    "frozen_input_sha256": {"$ref": "#/$defs/sha256"},
+    "execution_units": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["unit_id", "role", "context_id", "visible_input_sha256", "output"],
+        "properties": {
+          "unit_id": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "minLength": 1},
+          "context_id": {"type": "string", "minLength": 1},
+          "visible_input_sha256": {"$ref": "#/$defs/sha256"},
+          "output": {"$ref": "#/$defs/artifact"}
+        }
+      }
+    },
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9A-F]{64}$"},
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

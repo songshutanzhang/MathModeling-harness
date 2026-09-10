@@ -1,0 +1,399 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/mathmodel/harness_run_record.schema.json",
+  "title": "Evidence-bounded historical Harness run record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "run_path",
+    "status",
+    "mode",
+    "artifact_tier",
+    "route",
+    "reasoning_routes",
+    "quality",
+    "cost",
+    "artifacts",
+    "governed_footprint"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "artifact_complete_integrity_valid",
+        "artifact_complete_integrity_failed",
+        "partial"
+      ]
+    },
+    "mode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "artifact_tier": {
+      "enum": [
+        "tier1",
+        "tier2",
+        "tier3",
+        null
+      ]
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "g2_candidate_count",
+        "g2_selected",
+        "g5_action",
+        "g5_bundle_path",
+        "g5_integrity"
+      ],
+      "properties": {
+        "g2_candidate_count": {
+          "$ref": "#/$defs/measurement"
+        },
+        "g2_selected": {
+          "$ref": "#/$defs/measurement"
+        },
+        "g5_action": {
+          "$ref": "#/$defs/measurement"
+        },
+        "g5_bundle_path": {
+          "$ref": "#/$defs/measurement"
+        },
+        "g5_integrity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "evidence",
+            "error"
+          ],
+          "properties": {
+            "value": {
+              "enum": [
+                "pass",
+                "fail",
+                "missing"
+              ]
+            },
+            "evidence": {
+              "const": "observed"
+            },
+            "error": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "reasoning_routes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "integrity",
+        "events",
+        "tasks",
+        "effective_reasoning_efforts",
+        "effective_topologies",
+        "degraded_tasks",
+        "blocked_tasks",
+        "settled"
+      ],
+      "properties": {
+        "integrity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "evidence",
+            "error"
+          ],
+          "properties": {
+            "value": {
+              "enum": [
+                "pass",
+                "fail",
+                "missing"
+              ]
+            },
+            "evidence": {
+              "const": "observed"
+            },
+            "error": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "events": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "tasks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "effective_reasoning_efforts": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "effective_topologies": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "degraded_tasks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "blocked_tasks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "settled": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reliability_score",
+        "competition_upside_score"
+      ],
+      "properties": {
+        "reliability_score": {
+          "$ref": "#/$defs/measurement"
+        },
+        "competition_upside_score": {
+          "$ref": "#/$defs/measurement"
+        }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "token_usage",
+        "wall_clock_seconds",
+        "tool_calls",
+        "context_peak"
+      ],
+      "properties": {
+        "token_usage": {
+          "$ref": "#/$defs/measurement"
+        },
+        "wall_clock_seconds": {
+          "$ref": "#/$defs/measurement"
+        },
+        "tool_calls": {
+          "$ref": "#/$defs/measurement"
+        },
+        "context_peak": {
+          "$ref": "#/$defs/measurement"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "governed_footprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "files",
+        "bytes",
+        "docx",
+        "pdf",
+        "png",
+        "evidence",
+        "exclusions"
+      ],
+      "properties": {
+        "files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "docx": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pdf": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "png": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence": {
+          "const": "observed"
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "required": [
+        "status",
+        "path"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "missing",
+            "available",
+            "invalid"
+          ]
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": "object"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "evidence"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "number",
+            "integer",
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "enum": [
+            "observed",
+            "inferred",
+            "estimated",
+            "missing",
+            "integrity_failed"
+          ]
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "present",
+        "evidence"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "present": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "const": "observed"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "present": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "bytes",
+              "sha256"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

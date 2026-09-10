@@ -1,0 +1,1519 @@
+schema_version: '1.0'
+evidence_snapshot: null
+allowed_dispositions:
+- CORE
+- GUARD
+- LAZY
+- MERGE
+- EXPERIMENTAL
+- DELETE
+components:
+- id: runtime-preflight
+  layer: kernel
+  owner_stage: orchestration
+  primary_responsibility: 在任何计算前验证活动入口依赖闭包、运行依赖、规则版本与所请求 effort/topology/receipt 能力。
+  trigger: all runs before bounded tasks
+  inputs:
+  - active_skill_root
+  - repository_release
+  - contest_rule_source
+  - model_capability_snapshot
+  outputs:
+  - run/PREFLIGHT.json
+  - run/CONTEST_RULES.json
+  dependencies: []
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 在活动依赖缺失或正式运行能力不可满足时先消耗求解预算，最后才暴露协议失败。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: low
+    coupling: medium
+    maintenance: medium
+  disposition: CORE
+  replacement: null
+  migration: 新 run 必须先生成可执行 preflight；旧 run 保留 legacy 缺口，不追造历史回执。
+  rollback_trigger: 预检误判使合法入口无法启动或未能发现实际缺失依赖。
+  rollback_steps: 回退到已备份活动安装并保留失败预检供修复，不绕过 formal 能力缺口。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  owner: orchestration
+  recurring_cost:
+    status: missing
+    dimensions:
+    - wall_clock_seconds
+    - tool_calls
+- id: problem-freeze
+  layer: kernel
+  owner_stage: analysis
+  primary_responsibility: 在候选生成前冻结题意、规则、输入和暴露边界。
+  trigger: all runs
+  inputs:
+  - official_problem
+  - official_attachments
+  outputs:
+  - modeling/g2/PROBLEM_FREEZE.json
+  dependencies: []
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 题意或输入在候选比较后漂移。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: low
+    coupling: medium
+    maintenance: low
+  disposition: CORE
+  replacement: null
+  migration: 保留单一冻结入口。
+  rollback_trigger: 冻结文件无法被 G2/G5 校验器消费。
+  rollback_steps: 回退到 harness_pre_meta_v1 的冻结格式。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - analysis
+  owner: analysis
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: g2-tournament
+  layer: kernel
+  owner_stage: analysis
+  primary_responsibility: 隔离生成异质候选并用盲评、原型和可靠性门槛选择路线。
+  trigger: training_run, evaluation_run, live_competition
+  inputs:
+  - modeling/g2/PROBLEM_FREEZE.json
+  outputs:
+  - modeling/g2/ROUTE_SELECTION.yaml
+  dependencies:
+  - problem-freeze
+  - reasoning-router
+  - topology-controller
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 单一路线锚定或创新分覆盖硬错误。
+  capability_ledger:
+    floor: high
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: medium
+    coupling: medium
+    maintenance: medium
+  disposition: CORE
+  replacement: null
+  migration: 保留；候选数量与早停规则仅在实验配置中变化。
+  rollback_trigger: 异质候选率或未见题质量显著下降。
+  rollback_steps: 恢复基线候选与选择契约。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - analysis
+  owner: analysis
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: solver-execution
+  layer: kernel
+  owner_stage: coding
+  primary_responsibility: 执行已选路线，绑定计算与来源依赖、公平候选晋级及结构上限处置证据。
+  trigger: all full solution runs
+  inputs:
+  - model_contract
+  - official_data
+  outputs:
+  - code
+  - result_artifacts
+  dependencies:
+  - g2-tournament
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 模型只停留在叙述而没有可复现实证。
+  capability_ledger:
+    floor: high
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: medium
+    coupling: high
+    maintenance: medium
+  disposition: CORE
+  replacement: null
+  migration: 保持 problem-specific 实现，不引入统一基类。
+  rollback_trigger: 结果合同或复现入口失效。
+  rollback_steps: 按 case 恢复原 solve entrypoint。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - coding
+  owner: coding
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: results-contract
+  layer: kernel
+  owner_stage: coding
+  primary_responsibility: 提供论文、图表和验证共享的数值事实源。
+  trigger: all full solution runs
+  inputs:
+  - solver_outputs
+  outputs:
+  - results/results.json
+  dependencies:
+  - solver-execution
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 论文数值与代码结果分叉。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: low
+    coupling: high
+    maintenance: low
+  disposition: CORE
+  replacement: null
+  migration: 保持唯一事实源；减少派生文档复制。
+  rollback_trigger: 下游无法稳定绑定 result_id。
+  rollback_steps: 恢复基线 schema 与 validator。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - coding
+  - writing
+  - verification
+  owner: coding
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: independent-validation
+  layer: kernel
+  owner_stage: verification
+  primary_responsibility: 独立复核约束、数值、鲁棒性和求解器修复。
+  trigger: after solver response
+  inputs:
+  - results_contract
+  - solver_response
+  outputs:
+  - validation_report
+  - independent_validation
+  dependencies:
+  - results-contract
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: Solver 自证与未闭合硬错误。
+  capability_ledger:
+    floor: high
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: medium
+    coupling: medium
+    maintenance: medium
+  disposition: CORE
+  replacement: null
+  migration: 保留验证职责；取消与 Writer 的重复数值检查。
+  rollback_trigger: 误阻断率上升或独立性丢失。
+  rollback_steps: 恢复基线 G5 验证顺序。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - coding
+  - verification
+  owner: verification
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: semantic-package
+  layer: kernel
+  owner_stage: coding
+  primary_responsibility: 把方程、假设、result_id、图和限制冻结为供 Writer 消费的语义证据包。
+  trigger: all full solution runs
+  inputs:
+  - results_contract
+  - validation_report
+  outputs:
+  - run/SEMANTIC_ARTIFACT_PACKAGE.yaml
+  dependencies:
+  - results-contract
+  - independent-validation
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 训练被版式链阻断或 Writer 改写数值。
+  capability_ledger:
+    floor: medium
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: low
+    coupling: medium
+    maintenance: low
+  disposition: CORE
+  replacement: null
+  migration: 由 3coding 负责冻结输入包；不得同时生成论文正文。
+  rollback_trigger: 语义论文缺少可审查的关键内容。
+  rollback_steps: 对风险 run 升级 audit profile。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - coding
+  - writing
+  owner: coding
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: semantic-writer
+  layer: kernel
+  owner_stage: writing
+  primary_responsibility: 只把冻结语义证据包转换为 paper.md，不改变模型或数值事实。
+  trigger: all full solution runs after semantic package freeze
+  inputs:
+  - run/SEMANTIC_ARTIFACT_PACKAGE.yaml
+  outputs:
+  - paper/paper.md
+  dependencies:
+  - semantic-package
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 训练被 Word 版式链阻断或 Writer 改写数值。
+  capability_ledger:
+    floor: medium
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: low
+    coupling: medium
+    maintenance: low
+  disposition: CORE
+  replacement: null
+  migration: Tier 1 止于 paper.md；Word 延迟加载。
+  rollback_trigger: paper.md 缺失关键公式、结果绑定或限制。
+  rollback_steps: 修复 Writer 转换，不改写语义包。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - writing
+  owner: writing
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: run-ledger
+  layer: kernel
+  owner_stage: governance
+  primary_responsibility: 通过全流程任务图保存计算及外部节点、有效批准、可恢复发布、成本分账和当前下一步。
+  trigger: all runs
+  inputs:
+  - run_artifacts
+  - runtime_telemetry
+  outputs:
+  - run_record
+  dependencies:
+  - runtime-preflight
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 把估计成本或人工印象当成精确证据。
+  capability_ledger:
+    floor: medium
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: low
+    coupling: low
+    maintenance: low
+  disposition: CORE
+  replacement: null
+  migration: 新 run 登记数值、评审、写作和批准节点；历史只做回溯，不把文件存在当成 completed。
+  rollback_trigger: 采集器改变或污染原始 run。
+  rollback_steps: 禁用采集写入，只保留只读扫描。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - drawing
+  - writing
+  - verification
+  owner: governance
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: reasoning-router
+  layer: kernel
+  owner_stage: orchestration
+  primary_responsibility: 按有界任务记录实际 model_id、reasoning_effort、topology、回执、降级和复评状态。
+  trigger: all runs and every bounded reasoning task
+  inputs:
+  - execution_mode
+  - model_capability_snapshot
+  - task_class
+  - risk_signals
+  outputs:
+  - run/REASONING_ROUTE_LEDGER.jsonl
+  - model_application_receipt
+  dependencies:
+  - run-ledger
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 训练无法路由，或在无生效回执时声称已切换模型/effort。
+  capability_ledger:
+    floor: high
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: medium
+    coupling: medium
+    maintenance: medium
+  disposition: CORE
+  replacement: human_gate.py legacy route-* state
+  migration: 所有新 run 使用独立 route ledger；Gate 只引用 completed route event。
+  rollback_trigger: 路由账本阻断正常 High fallback 或出现状态链错误。
+  rollback_steps: 切回 harness_pre_meta_v1，并保留新账本作只读证据。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - drawing
+  - writing
+  - verification
+  owner: orchestration
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: topology-controller
+  layer: conditional
+  owner_stage: orchestration
+  primary_responsibility: 只在请求非 single 拓扑时验证独立上下文、统一冻结输入和隔离输出回执。
+  trigger: requested topology is independent_candidates, dual_review, or ensemble
+  inputs:
+  - frozen_input_hash
+  - model_capability_snapshot
+  - isolated_execution_receipts
+  outputs:
+  - topology_execution_receipt
+  dependencies:
+  - reasoning-router
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 把顺序文件隔离或单上下文执行伪装成真正独立审查。
+  capability_ledger:
+    floor: high
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: medium
+    coupling: medium
+    maintenance: medium
+  disposition: LAZY
+  replacement: null
+  migration: G2/G5 或元审查请求非 single 时调用；实际 single 自动降级披露。
+  rollback_trigger: 隔离回执成本超过收益或运行时无法稳定提供 context 标识。
+  rollback_steps: 退化为 single 并降低独立性证据置信度，不移除冻结输入约束。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - verification
+  owner: orchestration
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: capability-selector
+  layer: conditional
+  owner_stage: orchestration
+  primary_responsibility: 仅在训练开始前依据能力缺口选择题目并冻结理由。
+  trigger: training_run
+  inputs:
+  - capability_gap
+  - failure_distribution
+  - case_catalog
+  - history
+  outputs:
+  - run/TRAINING_SELECTION.json
+  dependencies:
+  - run-ledger
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 按年份顺序造成题型偏置。
+  capability_ledger:
+    floor: medium
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: medium
+    coupling: medium
+    maintenance: medium
+  disposition: LAZY
+  replacement: null
+  migration: 只在 training_run profile 激活。
+  rollback_trigger: 选择器连续产生低增益或违反近三题约束。
+  rollback_steps: 回退到冻结 catalog 的人工可审计选择。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  active_stages:
+  - orchestration
+  owner: orchestration
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: source-learning
+  layer: conditional
+  owner_stage: analysis
+  primary_responsibility: 在 cold-start 冻结后读取解答性材料并形成反拨证据。
+  trigger: training_run or reference_case_ingestion after freeze
+  inputs:
+  - source_manifest
+  - frozen_cold_start
+  outputs:
+  - learning_report
+  - backcast
+  dependencies:
+  - problem-freeze
+  - source-exposure-ledger
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 后见之明污染 cold-start。
+  capability_ledger:
+    floor: medium
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: medium
+    coupling: medium
+    maintenance: medium
+  disposition: LAZY
+  replacement: null
+  migration: 仅训练/参考摄取且冻结后加载。
+  rollback_trigger: 来源暴露顺序无法验证。
+  rollback_steps: 停止学习阶段并回到未暴露快照。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  active_stages:
+  - analysis
+  owner: analysis
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: knowledge-retrieval
+  layer: conditional
+  owner_stage: analysis
+  primary_responsibility: 按问题族和风险加载最相关知识卡。
+  trigger: knowledge gap or high-risk domain judgment
+  inputs:
+  - knowledge_index
+  - problem_family
+  outputs:
+  - selected_cards
+  dependencies:
+  - problem-freeze
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 遗漏已知领域防错规则。
+  capability_ledger:
+    floor: medium
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: low
+    coupling: low
+    maintenance: medium
+  disposition: LAZY
+  replacement: null
+  migration: 索引常驻，卡片按需加载。
+  rollback_trigger: 高风险题遗漏必需卡片。
+  rollback_steps: 临时恢复阶段性卡片集合并记录触发条件。
+  trigger_owner: condition-detectors
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - analysis
+  - coding
+  owner: analysis
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: special-model-guides
+  layer: conditional
+  owner_stage: analysis
+  primary_responsibility: 提供罕见模型族的专项实现与防错指南。
+  trigger: selected route requires a special model family
+  inputs:
+  - selected_route
+  outputs:
+  - model_specific_guidance
+  dependencies:
+  - g2-tournament
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 罕见模型误用。
+  capability_ledger:
+    floor: medium
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: low
+    coupling: low
+    maintenance: medium
+  disposition: LAZY
+  replacement: null
+  migration: 从常驻上下文移到 route-trigger。
+  rollback_trigger: 模型实现错误率上升。
+  rollback_steps: 恢复对应专项指南为阶段必读。
+  trigger_owner: condition-detectors
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - analysis
+  - coding
+  owner: analysis
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: non-data-figures
+  layer: conditional
+  owner_stage: drawing
+  primary_responsibility: 仅在论文需要时生成流程图、结构图和路线图。
+  trigger: non-data figure is justified
+  inputs:
+  - analysis_report
+  - results_report
+  outputs:
+  - figures/drawio
+  - figures/pdf
+  dependencies:
+  - semantic-package
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 论文缺少关键非数据型解释图。
+  capability_ledger:
+    floor: low
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: low
+    coupling: low
+    maintenance: low
+  disposition: LAZY
+  replacement: null
+  migration: 默认不加载 4drawio；由明确图示需求触发。
+  rollback_trigger: 评审反馈显示关键方法难以理解。
+  rollback_steps: 在 audit/contest profile 强制补图评估。
+  trigger_owner: condition-detectors
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - drawing
+  owner: drawing
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: word-delivery
+  layer: conditional
+  owner_stage: writing
+  primary_responsibility: 先验证短转换样例，再把语义包转换为唯一可编辑 DOCX 并派生 PDF。
+  trigger: tier2 or tier3
+  inputs:
+  - semantic-package
+  outputs:
+  - versioned_docx
+  - derived_pdf
+  dependencies:
+  - semantic-package
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 里程碑或正式交付不可编辑、不同源。
+  capability_ledger:
+    floor: high
+    ceiling: low
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: high
+    coupling: high
+    maintenance: high
+  disposition: LAZY
+  replacement: null
+  migration: 只由 audit/contest profile 加载。
+  rollback_trigger: 连续 Tier 2 发现语义包无法生成合格 Word。
+  rollback_steps: 提高抽检频率，不回填每个训练 run。
+  trigger_owner: runtime
+  active_profiles:
+  - audit
+  - contest
+  active_stages:
+  - writing
+  owner: writing
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: page-render-audit
+  layer: conditional
+  owner_stage: verification
+  primary_responsibility: 检查 DOCX 派生页面的分页、清晰度和视觉错误。
+  trigger: tier2 or tier3
+  inputs:
+  - versioned_docx
+  - derived_pdf
+  outputs:
+  - page_png
+  - render_receipt
+  dependencies:
+  - word-delivery
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 提交稿分页或图表不可读。
+  capability_ledger:
+    floor: high
+    ceiling: low
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: high
+    coupling: medium
+    maintenance: high
+  disposition: LAZY
+  replacement: null
+  migration: 首轮全页 QA；仅同页位同 PNG 哈希复用旧结论，变化页全部检查，最终独立重渲染。
+  rollback_trigger: 抽样漏检重大版式错误。
+  rollback_steps: 将下一里程碑提升为全量页面检查。
+  trigger_owner: runtime
+  active_profiles:
+  - audit
+  - contest
+  active_stages:
+  - verification
+  owner: verification
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: g5-blind-review
+  layer: contest_safeguard
+  owner_stage: coding
+  primary_responsibility: 分离 Failure Hunter 与 Ceiling Reviewer，并在证据汇合后决定回拨。
+  trigger: after results freeze
+  inputs:
+  - evidence_package
+  outputs:
+  - g5_decision
+  dependencies:
+  - results-contract
+  - independent-validation
+  - reasoning-router
+  - topology-controller
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 确认偏差、漂移证据或用创新分掩盖硬错误。
+  capability_ledger:
+    floor: high
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: high
+    coupling: high
+    maintenance: medium
+  disposition: MERGE
+  replacement: g5-reliability-gate + g5-blind-upside-review
+  migration: 只保留旧双评审包入口，旧 run 不重写。
+  rollback_trigger: 独立性声明无法由运行器兑现。
+  rollback_steps: 标记 flattened execution，并提高人工复核置信度门槛。
+  trigger_owner: runtime
+  active_profiles: []
+  active_stages: []
+  owner: coding
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: source-exposure-ledger
+  layer: contest_safeguard
+  owner_stage: governance
+  primary_responsibility: 记录何时暴露何种来源并验证污染边界。
+  trigger: any external or solution-like source access
+  inputs:
+  - source_access_event
+  outputs:
+  - source_exposure_ledger
+  dependencies:
+  - problem-freeze
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 训练或评测后见之明污染。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: medium
+    coupling: medium
+    maintenance: low
+  disposition: GUARD
+  replacement: null
+  migration: 机器账本唯一事实源，人类摘要不复制普通事件。
+  rollback_trigger: 来源访问无法追溯到冻结点。
+  rollback_steps: 暂停该 run 并按污染规则处置。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - analysis
+  owner: governance
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: artifact-governance
+  layer: contest_safeguard
+  owner_stage: governance
+  primary_responsibility: 在 run 开始时冻结最低交付层级并禁止降级。
+  trigger: all runs
+  inputs:
+  - mode
+  - risk_events
+  - milestone_count
+  outputs:
+  - compliance/ARTIFACT_GOVERNANCE.json
+  dependencies: []
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 正式赛或高风险事件跳过必需交付检查。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: low
+    coupling: medium
+    maintenance: low
+  disposition: GUARD
+  replacement: null
+  migration: 与 profile resolver 串联，governance 决定 tier，profile 决定模块。
+  rollback_trigger: profile 与冻结 tier 不一致。
+  rollback_steps: fail closed 并恢复全量 tier 要求。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  owner: governance
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: artifact-lifecycle
+  layer: contest_safeguard
+  owner_stage: governance
+  primary_responsibility: 证明临时产物已有持久替代后才允许处置。
+  trigger: artifact promotion or cleanup
+  inputs:
+  - lifecycle_events
+  outputs:
+  - append_only_lifecycle
+  dependencies:
+  - run-ledger
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 误删尚未提升的唯一证据。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: medium
+    coupling: low
+    maintenance: low
+  disposition: GUARD
+  replacement: null
+  migration: 生命周期日志保留；实际清理按显式目标惰性执行。
+  rollback_trigger: 清理计划错误命中受保护文件。
+  rollback_steps: 停止 apply，只保留 inventory。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - verification
+  owner: governance
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: human-gates
+  layer: contest_safeguard
+  owner_stage: governance
+  primary_responsibility: 在 formal 模式记录路线与最终交付两次人工批准，并独立保存六项技术检查及阶段失效；兼容旧六审批协议。
+  trigger: evaluation_run, live_competition, release_candidate
+  inputs:
+  - decision_packet
+  - completed_route_reference
+  - model_capability_snapshot
+  outputs:
+  - compliance/HUMAN_GATES.json
+  dependencies:
+  - artifact-governance
+  - reasoning-router
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 不可逆路线切换、合规或提交决策缺少人类授权。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: high
+    coupling: high
+    maintenance: high
+  disposition: GUARD
+  replacement: null
+  migration: 新 run 使用 grouped_gate.py schema 3.0；已有批准可由 source/checkpoint/artifact
+    三重绑定导入，旧 schema 2.0 不隐式迁移。
+  rollback_trigger: 正式模式中 gate 链缺失或哈希失效。
+  rollback_steps: 保持旧 schema 2.0 案例原协议；v3 出错只失效受影响阶段并保留旧 evidence，不把技术通过写成人工批准。
+  trigger_owner: runtime
+  active_profiles:
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - drawing
+  - writing
+  - verification
+  owner: governance
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: contest-compliance
+  layer: contest_safeguard
+  owner_stage: verification
+  primary_responsibility: 按竞赛年份、模式和来源哈希选择规则，再执行匿名性、AI 披露、最终 manifest 和提交一致性检查。
+  trigger: tier3
+  inputs:
+  - competition_year
+  - contest_rule_source
+  - final_docx
+  - final_pdf
+  - ai_log
+  - manifest
+  outputs:
+  - final_delivery
+  - verify_report
+  dependencies:
+  - word-delivery
+  - page-render-audit
+  - human-gates
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 数学正确但提交违规或文件不同源。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: high
+    coupling: high
+    maintenance: high
+  disposition: GUARD
+  replacement: null
+  migration: 仅 Contest profile 全量加载；2026 固定措辞检查器拒绝其他年份。
+  rollback_trigger: 发布候选遗漏强制提交项。
+  rollback_steps: 阻断发布并恢复 Tier 3 全链。
+  trigger_owner: runtime
+  active_profiles:
+  - contest
+  active_stages:
+  - verification
+  owner: verification
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: recovery-controller
+  layer: contest_safeguard
+  owner_stage: governance
+  primary_responsibility: 识别 running marker、隔离部分输出，并按任务内容身份执行最小范围重试、回拨或 fallback。
+  trigger: recovery_required
+  inputs:
+  - failure_event
+  - last_good_snapshot
+  outputs:
+  - task_interrupted_event
+  - quarantine_record
+  - recovery_decision
+  dependencies:
+  - run-ledger
+  - artifact-lifecycle
+  - recovery-detector
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 无人值守训练卡死或正式赛不可恢复。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: high
+    coupling: medium
+    maintenance: medium
+  disposition: GUARD
+  replacement: null
+  migration: 平时由运行器保留 marker；异常事件触发 recover，同 run 增加 attempt，不清除已有批准。
+  rollback_trigger: 恢复动作扩大损坏或无界循环。
+  rollback_steps: 停止自动恢复并回到最后良好快照。
+  trigger_owner: recovery-detector
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - drawing
+  - writing
+  - verification
+  owner: governance
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: human-readable-vault
+  layer: conditional
+  owner_stage: governance
+  primary_responsibility: 从机器账本生成阶段摘要、重大决策、失败与剪枝理由。
+  trigger: stage boundary or human_summary_required
+  inputs:
+  - run-ledger
+  outputs:
+  - human_summary
+  dependencies:
+  - run-ledger
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 人类无法低成本理解运行状态。
+  capability_ledger:
+    floor: low
+    ceiling: medium
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: medium
+    coupling: low
+    maintenance: high
+  disposition: MERGE
+  replacement: run-ledger 派生视图
+  migration: 停止抄写普通中间状态，只生成阶段摘要。
+  rollback_trigger: 用户无法从摘要定位关键决策或失败。
+  rollback_steps: 扩展摘要模板，不恢复双事实源。
+  trigger_owner: runtime
+  active_profiles: []
+  active_stages: []
+  owner: governance
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: repeated-delivery-checks
+  layer: conditional
+  owner_stage: verification
+  primary_responsibility: 历史上在多个阶段重复检查分页、metadata、manifest 与披露。
+  trigger: legacy stage transitions
+  inputs:
+  - delivery_artifacts
+  outputs:
+  - duplicated_check_reports
+  dependencies:
+  - word-delivery
+  - page-render-audit
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 由 contest-compliance 与 page-render-audit 接管。
+  capability_ledger:
+    floor: low
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: high
+    state: medium
+    coupling: high
+    maintenance: high
+  disposition: MERGE
+  replacement: artifact-governance + page-render-audit + contest-compliance
+  migration: 统一由 profile 激活，阶段 skill 只声明输入输出。
+  rollback_trigger: 统一检查器遗漏旧检查项。
+  rollback_steps: 恢复遗漏项到统一模块，不恢复重复入口。
+  trigger_owner: runtime
+  active_profiles: []
+  active_stages: []
+  owner: verification
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: ceiling-rescue
+  layer: experimental
+  owner_stage: analysis
+  primary_responsibility: 允许 Ceiling Reviewer 复活早期淘汰的高潜力路线并绑定 fallback。
+  trigger: explicit experiment opt-in
+  inputs:
+  - g2_candidates
+  - g5_ceiling_review
+  outputs:
+  - rescue_experiment
+  dependencies:
+  - g2-tournament
+  - g5-blind-upside-review
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 不适用；实验必须由 fallback 控制下界。
+  capability_ledger:
+    floor: low
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: medium
+    coupling: medium
+    maintenance: medium
+  disposition: EXPERIMENTAL
+  replacement: null
+  migration: 默认关闭；仅进入单变量实验。
+  rollback_trigger: 重大失败率、方差或成本超过预注册阈值。
+  rollback_steps: 关闭实验 opt-in，使用原 G2 winner。
+  trigger_owner: runtime
+  active_profiles: []
+  active_stages:
+  - analysis
+  owner: analysis
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: g5-reliability-gate
+  layer: contest_safeguard
+  owner_stage: coding
+  primary_responsibility: 独立阻断归并后的开放硬错误、验证失败和证据漂移，并验证追加修复裁决；不依赖上限评分。
+  trigger: after results freeze
+  inputs:
+  - evidence_package
+  outputs:
+  - g5_reliability_result
+  - finding_disposition_chain
+  dependencies:
+  - results-contract
+  - independent-validation
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 确认偏差、漂移证据或用创新分掩盖硬错误。
+  capability_ledger:
+    floor: high
+    ceiling: high
+    evidence_confidence: low
+  complexity_ledger:
+    context: medium
+    state: high
+    coupling: high
+    maintenance: medium
+  disposition: GUARD
+  replacement: null
+  migration: 新入口 --reliability-only；修复用 g5_disposition.py 追加，Decision 绑定最新 chain head；旧双审包无
+    disposition 时兼容。
+  rollback_trigger: 独立性声明无法由运行器兑现。
+  rollback_steps: 标记 flattened execution，并提高人工复核置信度门槛。
+  trigger_owner: runtime
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - coding
+  - verification
+  owner: coding
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: profile-resolver
+  layer: kernel
+  owner_stage: orchestration
+  primary_responsibility: 将冻结 governance 和条件映射到不可降级阶段模块。
+  trigger: all runs
+  inputs:
+  - frozen_inputs
+  outputs:
+  - HARNESS_PROFILE.json
+  dependencies: []
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 无人值守训练卡死或正式赛不可恢复。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: high
+    coupling: medium
+    maintenance: medium
+  disposition: CORE
+  replacement: null
+  migration: 由 profile 装配；旧入口保留回滚。
+  rollback_trigger: 装配遗漏、证据绑定失败或前向验证退化。
+  rollback_steps: 停用候选入口，读取冻结 legacy 实现。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - drawing
+  - writing
+  - verification
+  owner: orchestration
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: condition-detectors
+  layer: contest_safeguard
+  owner_stage: orchestration
+  primary_responsibility: 从显式需求和已冻结路线证据产生有作用域的条件事件。
+  trigger: stage boundary
+  inputs:
+  - frozen_inputs
+  outputs:
+  - CONDITION_EVENTS.json
+  dependencies: []
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 无人值守训练卡死或正式赛不可恢复。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: high
+    coupling: medium
+    maintenance: medium
+  disposition: GUARD
+  replacement: null
+  migration: 由 profile 装配；旧入口保留回滚。
+  rollback_trigger: 装配遗漏、证据绑定失败或前向验证退化。
+  rollback_steps: 停用候选入口，读取冻结 legacy 实现。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - drawing
+  - writing
+  - verification
+  owner: orchestration
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: recovery-detector
+  layer: contest_safeguard
+  owner_stage: orchestration
+  primary_responsibility: 从失败/超时/预算事件检测恢复需求，不执行恢复。
+  trigger: failure event
+  inputs:
+  - frozen_inputs
+  outputs:
+  - recovery_signal
+  dependencies: []
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 无人值守训练卡死或正式赛不可恢复。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: high
+    coupling: medium
+    maintenance: medium
+  disposition: GUARD
+  replacement: null
+  migration: 由 profile 装配；旧入口保留回滚。
+  rollback_trigger: 装配遗漏、证据绑定失败或前向验证退化。
+  rollback_steps: 停用候选入口，读取冻结 legacy 实现。
+  trigger_owner: runtime
+  active_profiles:
+  - reference
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - orchestration
+  - analysis
+  - coding
+  - drawing
+  - writing
+  - verification
+  owner: orchestration
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+- id: g5-blind-upside-review
+  layer: conditional
+  owner_stage: coding
+  primary_responsibility: 基于隔离证据评价路线发展潜力，不批准数学结果。
+  trigger: upside_review_required
+  inputs:
+  - frozen_inputs
+  outputs:
+  - g5_upside_result
+  dependencies:
+  - results-contract
+  observed_invocation_count: null
+  observed_contribution: Private observations omitted; validate in your own environment.
+  worst_failure_prevented: 无人值守训练卡死或正式赛不可恢复。
+  capability_ledger:
+    floor: high
+    ceiling: neutral
+    evidence_confidence: low
+  complexity_ledger:
+    context: low
+    state: high
+    coupling: medium
+    maintenance: medium
+  disposition: LAZY
+  replacement: null
+  migration: 由 profile 装配；旧入口保留回滚。
+  rollback_trigger: 装配遗漏、证据绑定失败或前向验证退化。
+  rollback_steps: 停用候选入口，读取冻结 legacy 实现。
+  trigger_owner: condition-detectors
+  active_profiles:
+  - draft
+  - audit
+  - contest
+  active_stages:
+  - coding
+  - verification
+  owner: coding
+  recurring_cost:
+    status: missing
+    dimensions:
+    - input_tokens
+    - wall_clock_seconds
+    - tool_calls
+    - context_peak
+public_distribution: true

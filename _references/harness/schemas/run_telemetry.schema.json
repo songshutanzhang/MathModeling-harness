@@ -1,0 +1,360 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "model_id",
+    "reasoning_effort",
+    "execution_instance_id",
+    "session_or_context_id",
+    "failure_class",
+    "run_id",
+    "case_id",
+    "call_id",
+    "captured_at",
+    "summary",
+    "schema_version",
+    "dataset_role",
+    "stage",
+    "kind",
+    "attempt",
+    "execution_order",
+    "human_intervention",
+    "prior_output_exposure",
+    "prompt_hash",
+    "config_hash",
+    "profile_hash",
+    "profile_version",
+    "input_artifact_hashes",
+    "reviewer_visible_inputs",
+    "reviewer_hidden_inputs",
+    "active_modules",
+    "metrics"
+  ],
+  "properties": {
+    "model_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "reasoning_effort": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "execution_instance_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "session_or_context_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "failure_class": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "call_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "captured_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "const": "1.0"
+    },
+    "dataset_role": {
+      "enum": [
+        "development",
+        "structural",
+        "held_out",
+        "sentinel",
+        "formal"
+      ]
+    },
+    "stage": {
+      "enum": [
+        "orchestration",
+        "analysis",
+        "coding",
+        "drawing",
+        "writing",
+        "verification"
+      ]
+    },
+    "kind": {
+      "enum": [
+        "tool",
+        "stage",
+        "decision",
+        "failure",
+        "prune",
+        "gate"
+      ]
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "execution_order": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "human_intervention": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "prior_output_exposure": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "prompt_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-F0-9]{64}$"
+    },
+    "config_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-F0-9]{64}$"
+    },
+    "profile_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-F0-9]{64}$"
+    },
+    "profile_version": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "input_artifact_hashes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[A-F0-9]{64}$"
+      }
+    },
+    "reviewer_visible_inputs": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "reviewer_hidden_inputs": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "active_modules": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "cached_tokens",
+        "wall_clock_seconds",
+        "tool_calls",
+        "context_peak"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "input_tokens": {
+          "type": "object",
+          "required": [
+            "value",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "evidence": {
+              "enum": [
+                "observed",
+                "missing"
+              ]
+            }
+          }
+        },
+        "output_tokens": {
+          "type": "object",
+          "required": [
+            "value",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "evidence": {
+              "enum": [
+                "observed",
+                "missing"
+              ]
+            }
+          }
+        },
+        "cached_tokens": {
+          "type": "object",
+          "required": [
+            "value",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "evidence": {
+              "enum": [
+                "observed",
+                "missing"
+              ]
+            }
+          }
+        },
+        "wall_clock_seconds": {
+          "type": "object",
+          "required": [
+            "value",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "evidence": {
+              "enum": [
+                "observed",
+                "missing"
+              ]
+            }
+          }
+        },
+        "tool_calls": {
+          "type": "object",
+          "required": [
+            "value",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "evidence": {
+              "enum": [
+                "observed",
+                "missing"
+              ]
+            }
+          }
+        },
+        "context_peak": {
+          "type": "object",
+          "required": [
+            "value",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "evidence": {
+              "enum": [
+                "observed",
+                "missing"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

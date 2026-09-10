@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/mathmodel/model_capability_snapshot.schema.json",
+  "title": "Frozen runtime model capability snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "captured_at", "runtime_id", "current", "models",
+    "supports_effective_setting_receipt", "supported_topologies",
+    "topology_effort_requirements", "quota_policy", "snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "runtime_id": {"type": "string", "minLength": 1},
+    "current": {"$ref": "#/$defs/setting"},
+    "models": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": [
+          "model_id", "supported_reasoning_efforts", "supports_task_override",
+          "supports_mid_conversation_update"
+        ],
+        "properties": {
+          "model_id": {"type": "string", "minLength": 1},
+          "supported_reasoning_efforts": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"$ref": "#/$defs/effort"}
+          },
+          "supports_task_override": {"enum": [true, false, "unknown"]},
+          "supports_mid_conversation_update": {"enum": [true, false, "unknown"]}
+        }
+      }
+    },
+    "supports_effective_setting_receipt": {"enum": [true, false, "unknown"]},
+    "supported_topologies": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/topology"}
+    },
+    "topology_effort_requirements": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "independent_candidates": {"$ref": "#/$defs/effort_list"},
+        "dual_review": {"$ref": "#/$defs/effort_list"},
+        "ensemble": {"$ref": "#/$defs/effort_list"}
+      }
+    },
+    "quota_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "hard_budget_present"],
+      "properties": {
+        "mode": {"enum": ["quality_first", "balanced", "hard_budget"]},
+        "hard_budget_present": {"type": "boolean"}
+      }
+    },
+    "snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "effort": {"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]},
+    "topology": {"enum": ["single", "independent_candidates", "dual_review", "ensemble"]},
+    "effort_list": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/effort"}
+    },
+    "setting": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_id", "reasoning_effort"],
+      "properties": {
+        "model_id": {"type": "string", "minLength": 1},
+        "reasoning_effort": {"$ref": "#/$defs/effort"}
+      }
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9A-F]{64}$"}
+  }
+}

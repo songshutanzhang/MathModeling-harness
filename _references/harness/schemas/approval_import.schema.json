@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "decision",
+    "phase",
+    "checkpoint_event_hash",
+    "checkpoint_artifacts_sha256",
+    "approval_evidence",
+    "source_event_id",
+    "source_recorded_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "decision_id": {"type": "string", "minLength": 3},
+    "decision": {"const": "approved"},
+    "phase": {"enum": ["route", "delivery"]},
+    "checkpoint_event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "checkpoint_artifacts_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "approval_evidence": {"type": "string", "minLength": 4},
+    "source_event_id": {"type": "string", "minLength": 3},
+    "source_recorded_at": {"type": "string", "format": "date-time"},
+    "scope_note": {"type": "string", "minLength": 4}
+  }
+}

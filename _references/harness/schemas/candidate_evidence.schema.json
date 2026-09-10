@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "candidate_id", "problem_level", "family", "role",
+    "objective", "feasible", "evaluator", "budget", "precision",
+    "sample_group", "artifact"
+  ],
+  "properties": {
+    "schema_version": {"enum": ["1.0", "1.1"]},
+    "candidate_id": {"type": "string", "minLength": 2},
+    "problem_level": {"type": "string", "minLength": 2},
+    "family": {"type": "string", "minLength": 2},
+    "role": {"enum": ["strong_baseline", "candidate", "ablation", "incumbent"]},
+    "objective": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "direction", "value"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "direction": {"enum": ["maximize", "minimize"]},
+        "value": {"type": "number"}
+      }
+    },
+    "feasible": {"type": "boolean"},
+    "evaluator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "sha256"],
+      "properties": {
+        "id": {"type": "string", "minLength": 2},
+        "sha256": {"type": "string", "pattern": "^[0-9A-F]{64}$"}
+        ,"path": {"type": "string", "minLength": 1}
+      }
+    },
+    "budget": {"type": "object", "minProperties": 1},
+    "precision": {"type": "object", "minProperties": 1},
+    "sample_group": {"type": "string", "minLength": 2},
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9A-F]{64}$"}
+      }
+    },
+    "ablation_of": {"type": "string", "minLength": 2},
+    "eligible_for": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 2}},
+    "complexity": {"type": "number", "minimum": 0},
+    "definition": {"type": "object", "required": ["id", "denominator", "aggregation"], "minProperties": 3},
+    "seeds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer"}},
+    "actual_budget": {"type": "object", "required": ["evaluations", "observed_seconds", "receipt"],
+      "properties": {"evaluations": {"type": "integer", "minimum": 1}, "observed_seconds": {"type": "number", "minimum": 0}, "receipt": {"type": "object", "required": ["path", "sha256"]}}},
+    "raw_metrics": {"type": "object", "minProperties": 1}
+  },
+  "allOf": [{"if": {"properties": {"schema_version": {"const": "1.1"}}},
+    "then": {"required": ["definition", "seeds", "actual_budget", "raw_metrics"],
+      "properties": {"evaluator": {"required": ["path"]}}}}]
+}
